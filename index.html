@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kalshi X Post Tracker</title>
+  <style>
+    :root {
+      --kalshi-green: #00d395;
+      --kalshi-green-dark: #079669;
+      --ink: #080c09;
+      --panel: #ffffff;
+      --bg: #f6f7f2;
+      --line: #dfe5dc;
+      --muted: #687168;
+      --danger: #b42318;
+      --soft-green: #e8fff5;
+      --shadow: 0 18px 40px rgba(7, 19, 13, .08);
+      --hero-bg: linear-gradient(135deg, #030806, #0b1510 62%, #073a29);
+      --card-bg: rgba(255, 255, 255, .78);
+      --input-bg: rgba(255, 255, 255, .9);
+      --table-bg: rgba(255, 255, 255, .86);
+      --table-head: rgba(246, 247, 242, .94);
+    }
+
+    body.dark {
+      --ink: #f6fff9;
+      --panel: #101511;
+      --bg: #050706;
+      --line: rgba(255, 255, 255, .12);
+      --muted: #aeb9b0;
+      --soft-green: rgba(0, 227, 125, .14);
+      --shadow: 0 18px 45px rgba(0, 0, 0, .34);
+      --hero-bg: linear-gradient(135deg, #020403, #0c1410 62%, #063522);
+      --card-bg: rgba(18, 24, 20, .72);
+      --input-bg: rgba(255, 255, 255, .08);
+      --table-bg: rgba(18, 24, 20, .82);
+      --table-head: rgba(255, 255, 255, .06);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(0, 211, 149, .16), transparent 32rem),
+        linear-gradient(180deg, #fbfbf7, var(--bg));
+      min-height: 100vh;
+      transition: background .2s ease, color .2s ease;
+    }
+
+    body.dark {
+      background:
+        radial-gradient(circle at top left, rgba(0, 211, 149, .18), transparent 32rem),
+        linear-gradient(180deg, #08100b, var(--bg));
+    }
+
+    .app {
+      width: min(1240px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 14px 0 32px;
+    }
+
+    .hero {
+      background: var(--hero-bg);
+      color: #fff;
+      border-radius: 22px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .12);
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 20px;
+      font-weight: 950;
+      letter-spacing: -.04em;
+    }
+
+    .logo-image {
+      width: 76px;
+      height: auto;
+      display: block;
+      border-radius: 0;
+      object-fit: contain;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -90px -130px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(0, 227, 125, .28);
+      filter: blur(2px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      background: rgba(0, 227, 125, .13);
+      border: 1px solid rgba(0, 227, 125, .38);
+      color: var(--kalshi-green);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 38px);
+      line-height: 1;
+      letter-spacing: -.045em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 740px;
+      color: rgba(255, 255, 255, .78);
+      font-size: 16px;
+      line-height: 1.55;
+      position: relative;
+      z-index: 1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 10px 28px rgba(7, 19, 13, .05);
+      backdrop-filter: blur(22px);
+    }
+
+    .span-8 { grid-column: span 8; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+    .span-3 { grid-column: span 3; }
+    .span-12 { grid-column: span 12; }
+
+    .compact-card {
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      letter-spacing: -.02em;
+    }
+
+    .sub {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px 10px;
+      font: inherit;
+      color: var(--ink);
+      background: var(--input-bg);
+      outline: none;
+    }
+
+    select option {
+      color: #080c09;
+      background: #fff;
+    }
+
+    body.dark select option {
+      color: #f6fff9;
+      background: #101511;
+    }
+
+    textarea {
+      min-height: 40px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--kalshi-green-dark);
+      box-shadow: 0 0 0 4px rgba(0, 227, 125, .14);
+    }
+
+    .field { margin-bottom: 12px; }
+
+    details {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    summary {
+      padding: 12px 14px;
+      cursor: pointer;
+      font-weight: 900;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    .details-body {
+      padding: 0 14px 14px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .row > * { flex: 1 1 180px; }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 140px 210px 250px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .toolbar .field { margin-bottom: 0; }
+
+    .toolbar input,
+    .toolbar select,
+    .toolbar button {
+      height: 40px;
+    }
+
+    .toolbar button {
+      white-space: nowrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      color: var(--ink);
+      background: var(--kalshi-green);
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 9px 18px rgba(0, 163, 95, .22);
+    }
+
+    button.secondary {
+      background: var(--input-bg);
+      border: 1px solid var(--line);
+      color: var(--ink);
+    }
+
+    button.danger {
+      color: #fff;
+      background: var(--danger);
+    }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .metric {
+      min-height: 92px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      background: linear-gradient(180deg, var(--card-bg), var(--soft-green));
+    }
+
+    .metric .value {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -.04em;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--soft-green);
+      color: #006b3c;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 9px 11px;
+      border-radius: 14px;
+      background: #ecfdf3;
+      color: #07542f;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .status.error {
+      background: #fff1f0;
+      color: var(--danger);
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    .filters .field { margin-bottom: 0; }
+
+    .summary-filters {
+      display: flex;
+      gap: 10px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .summary-filters .field {
+      min-width: 160px;
+      margin-bottom: 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .theme-toggle {
+      flex: 0 0 auto;
+      min-width: 44px;
+      padding: 9px 12px;
+      font-size: 18px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(7, 19, 13, .56);
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow: auto;
+    }
+
+    .modal-card {
+      width: min(1180px, 100%);
+      background: var(--panel);
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      box-shadow: 0 30px 80px rgba(7, 19, 13, .25);
+      padding: 18px;
+    }
+
+    .auth-card {
+      width: min(420px, 100%);
+      margin-top: 9vh;
+    }
+
+    .auth-card h2 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+
+    .auth-card .field {
+      margin: 14px 0 10px;
+    }
+
+    .post-text {
+      max-width: 520px;
+      white-space: pre-wrap;
+      line-height: 1.4;
+      color: var(--ink);
+    }
+
+    .quote-list {
+      display: grid;
+      gap: 8px;
+      min-width: 420px;
+    }
+
+    .quote-item {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--input-bg);
+    }
+
+    .quote-item p {
+      margin: 6px 0;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+
+    .quote-detail {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--input-bg);
+    }
+
+    .quote-detail p {
+      margin: 8px 0;
+      line-height: 1.4;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--table-bg);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    th {
+      background: var(--table-head);
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .account {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 240px;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #dfe7dc;
+      border: 1px solid var(--line);
+    }
+
+    .account strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .account span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .summary-rank {
+      width: 32px;
+      height: 32px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 10px;
+      background: #06120c;
+      color: var(--kalshi-green);
+      font-weight: 900;
+      margin-right: 10px;
+    }
+
+    a {
+      color: #007845;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    a:hover { text-decoration: underline; }
+
+    .empty {
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--table-bg);
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 900px) {
+      .span-8, .span-6, .span-4, .span-3 { grid-column: span 12; }
+      .hero { padding: 22px; }
+      .filters { grid-template-columns: 1fr; }
+      .toolbar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="hero-top">
+        <div class="brand">
+          <img class="logo-image" src="assets/kalshi-logo.png" alt="Kalshi" />
+          <h1>X Performance Marketing Tracker</h1>
+        </div>
+        <div class="actions">
+          <button id="themeToggleBtn" class="secondary theme-toggle" type="button" aria-label="Toggle theme">☾</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card span-12">
+        <div class="toolbar">
+          <div class="field">
+            <label for="postLinks">Post Link</label>
+            <input id="postLinks" placeholder="https://x.com/account/status/1234567890" />
+            <input id="maxPages" type="hidden" value="5" />
+          </div>
+          <div class="field">
+            <label for="sport">Sport</label>
+            <select id="sport">
+              <option value="Soccer">Soccer</option>
+              <option value="NBA">NBA</option>
+              <option value="NFL">NFL</option>
+              <option value="Baseball">Baseball</option>
+              <option value="UFC">UFC</option>
+            </select>
+          </div>
+          <button id="fetchBtn">Load Post Performance</button>
+          <button id="trackedPostsBtn" class="secondary" type="button">Show Original Posts Tracked</button>
+        </div>
+        <div id="status" class="status hidden"></div>
+      </article>
+
+      <article class="card metric span-3">
+        <span id="totalPosts" class="value">0</span>
+        <span class="label">Total Kalshi Posts</span>
+      </article>
+      <article class="card metric span-3">
+        <span id="totalQuotes" class="value">0</span>
+        <span class="label">Total Quotes</span>
+      </article>
+      <article class="card metric span-3">
+        <span id="totalLikes" class="value">0</span>
+        <span class="label">Total Likes</span>
+      </article>
+      <article class="card metric span-3">
+        <span id="totalViews" class="value">0</span>
+        <span class="label">Total Views</span>
+      </article>
+
+      <article class="card span-12">
+        <div class="header-row">
+          <div>
+            <h2>Top Performing Accounts</h2>
+            <p class="sub" style="margin-bottom:0;">Ranked by impressions per quote. Expand an account to see its quote posts.</p>
+          </div>
+          <div class="summary-filters">
+            <div class="field">
+              <label for="summarySportFilter">Sport</label>
+              <select id="summarySportFilter">
+                <option value="All">All sports</option>
+                <option value="Soccer">Soccer</option>
+                <option value="NBA">NBA</option>
+                <option value="NFL">NFL</option>
+                <option value="Baseball">Baseball</option>
+                <option value="UFC">UFC</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="summaryPostDateFilter">Original post date</label>
+              <input id="summaryPostDateFilter" type="date" />
+            </div>
+            <div class="field">
+              <label for="summaryMinQuotesFilter">Minimum quotes</label>
+              <input id="summaryMinQuotesFilter" type="number" min="0" step="1" placeholder="0" />
+            </div>
+          </div>
+        </div>
+        <div id="summaryEmpty" class="empty">No account summary yet.</div>
+        <div id="summaryWrap" class="table-wrap hidden">
+          <table>
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Total Quotes</th>
+                <th>Impressions per Quote</th>
+                <th>Total Impressions</th>
+                <th>Total Likes</th>
+                <th>Total RTs</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="accountSummaryRows"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div id="postsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="trackedPostsTitle">
+    <section class="modal-card">
+      <div class="header-row">
+        <div>
+          <h2 id="trackedPostsTitle">Original Posts Tracked</h2>
+          <p class="sub" style="margin-bottom:0;">Fetched posts are saved automatically in this browser.</p>
+        </div>
+        <div class="actions">
+          <button id="clearBtn" class="danger" type="button">Clear All</button>
+          <button id="closePostsBtn" class="secondary" type="button">Close</button>
+        </div>
+      </div>
+      <div id="postsList" class="empty" style="margin-top:12px;">No original posts tracked yet.</div>
+    </section>
+  </div>
+
+  <div id="quoteModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="quoteModalTitle">
+    <section class="modal-card">
+      <div class="header-row">
+        <div>
+          <h2 id="quoteModalTitle">Quote Posts</h2>
+          <p id="quoteModalSub" class="sub" style="margin-bottom:0;"></p>
+        </div>
+        <button id="closeQuoteModalBtn" class="secondary" type="button">Close</button>
+      </div>
+      <div class="field">
+        <label for="quotePostSelect">Select quote post</label>
+        <select id="quotePostSelect"></select>
+      </div>
+      <div id="quotePostDetail" class="quote-detail"></div>
+    </section>
+  </div>
+
+  <div id="authModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <section class="modal-card auth-card">
+      <h2 id="authTitle">Protected Access</h2>
+      <p class="sub">Enter the daily password to open the tracker.</p>
+      <div class="field">
+        <label for="authPassword">Daily password</label>
+        <input id="authPassword" type="password" autocomplete="current-password" />
+      </div>
+      <button id="authLoginBtn" type="button">Unlock Tracker</button>
+      <div id="authStatus" class="status hidden"></div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "kalshi-x-post-tracker-v1";
+    const AUTH_STORAGE_KEY = "kalshi-x-auth-token";
+    const AUTH_APP_ID = "kalshi-x-tracker";
+
+    const els = {
+      postLinks: document.getElementById("postLinks"),
+      sport: document.getElementById("sport"),
+      maxPages: document.getElementById("maxPages"),
+      fetchBtn: document.getElementById("fetchBtn"),
+      status: document.getElementById("status"),
+      totalPosts: document.getElementById("totalPosts"),
+      totalQuotes: document.getElementById("totalQuotes"),
+      totalLikes: document.getElementById("totalLikes"),
+      totalViews: document.getElementById("totalViews"),
+      summarySportFilter: document.getElementById("summarySportFilter"),
+      summaryPostDateFilter: document.getElementById("summaryPostDateFilter"),
+      summaryMinQuotesFilter: document.getElementById("summaryMinQuotesFilter"),
+      summaryEmpty: document.getElementById("summaryEmpty"),
+      summaryWrap: document.getElementById("summaryWrap"),
+      accountSummaryRows: document.getElementById("accountSummaryRows"),
+      trackedPostsBtn: document.getElementById("trackedPostsBtn"),
+      themeToggleBtn: document.getElementById("themeToggleBtn"),
+      postsModal: document.getElementById("postsModal"),
+      closePostsBtn: document.getElementById("closePostsBtn"),
+      postsList: document.getElementById("postsList"),
+      quoteModal: document.getElementById("quoteModal"),
+      closeQuoteModalBtn: document.getElementById("closeQuoteModalBtn"),
+      quoteModalTitle: document.getElementById("quoteModalTitle"),
+      quoteModalSub: document.getElementById("quoteModalSub"),
+      quotePostSelect: document.getElementById("quotePostSelect"),
+      quotePostDetail: document.getElementById("quotePostDetail"),
+      authModal: document.getElementById("authModal"),
+      authPassword: document.getElementById("authPassword"),
+      authLoginBtn: document.getElementById("authLoginBtn"),
+      authStatus: document.getElementById("authStatus"),
+      clearBtn: document.getElementById("clearBtn")
+    };
+
+    let state = loadState();
+    let accountRowsByKey = new Map();
+    let activeQuoteRows = [];
+    const savedTheme = localStorage.getItem("kalshi-x-theme") || "light";
+    document.body.classList.toggle("dark", savedTheme === "dark");
+    updateThemeButton();
+
+    function loadState() {
+      const fallback = {
+        version: 1,
+        updatedAt: null,
+        posts: {},
+        settings: { sourceMode: "proxy", proxyUrl: "http://localhost:3000/quotes" }
+      };
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        const loaded = {
+          ...fallback,
+          ...saved,
+          settings: { ...fallback.settings, ...(saved.settings || {}) }
+        };
+        if (!loaded.settings.proxyUrl) loaded.settings.proxyUrl = fallback.settings.proxyUrl;
+        return loaded;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function persist() {
+      state.updatedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state, null, 2));
+      render();
+    }
+
+    function setStatus(message, isError = false) {
+      els.status.textContent = message;
+      els.status.classList.toggle("error", isError);
+      els.status.classList.toggle("hidden", !message || message === "Ready.");
+    }
+
+    function setAuthStatus(message, isError = false) {
+      els.authStatus.textContent = message || "";
+      els.authStatus.classList.toggle("error", isError);
+      els.authStatus.classList.toggle("hidden", !message);
+    }
+
+    function authToken() {
+      return localStorage.getItem(AUTH_STORAGE_KEY) || "";
+    }
+
+    function deviceId() {
+      const key = "kalshi-x-device-id";
+      let id = localStorage.getItem(key);
+      if (!id) {
+        id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        localStorage.setItem(key, id);
+      }
+      return id;
+    }
+
+    async function authFetch(url, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      const token = authToken();
+      if (token) headers["x-session-token"] = token;
+      return fetch(url, { ...options, headers });
+    }
+
+    function showAuthGate() {
+      els.authModal.classList.remove("hidden");
+    }
+
+    function hideAuthGate() {
+      els.authModal.classList.add("hidden");
+    }
+
+    async function checkAuth() {
+      const token = authToken();
+      if (!token) {
+        showAuthGate();
+        return false;
+      }
+
+      try {
+        const response = await fetch("/auth/check", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ appId: AUTH_APP_ID, token })
+        });
+        const payload = await response.json();
+        if (!payload.ok) throw new Error(payload.message || "Session expired.");
+        hideAuthGate();
+        return true;
+      } catch {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        showAuthGate();
+        return false;
+      }
+    }
+
+    async function login() {
+      const password = els.authPassword.value.trim();
+      if (!password) {
+        setAuthStatus("Enter the daily password.", true);
+        return;
+      }
+
+      els.authLoginBtn.disabled = true;
+      try {
+        const response = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ appId: AUTH_APP_ID, password, deviceId: deviceId() })
+        });
+        const payload = await response.json();
+        if (!payload.ok) throw new Error(payload.message || "Login failed.");
+        localStorage.setItem(AUTH_STORAGE_KEY, payload.token);
+        els.authPassword.value = "";
+        setAuthStatus("");
+        hideAuthGate();
+      } catch (error) {
+        setAuthStatus(error.message || "Login failed.", true);
+      } finally {
+        els.authLoginBtn.disabled = false;
+      }
+    }
+
+    function updateThemeButton() {
+      if (!els.themeToggleBtn) return;
+      els.themeToggleBtn.textContent = document.body.classList.contains("dark") ? "☀" : "☾";
+    }
+
+    function formatNumber(value) {
+      if (value === null || value === undefined || value === "") return "-";
+      return Number(value).toLocaleString();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function extractTweetId(url) {
+      const match = String(url).match(/(?:x\.com|twitter\.com)\/[^/]+\/status(?:es)?\/(\d+)/i);
+      return match ? match[1] : null;
+    }
+
+    function normalizePostUrl(url, tweetId) {
+      const trimmed = String(url || "").trim();
+      return trimmed || `https://x.com/i/web/status/${tweetId}`;
+    }
+
+    function postLinksFromInput() {
+      return els.postLinks.value
+        .split(/\s+/)
+        .map(link => link.trim())
+        .filter(Boolean)
+        .map(link => ({ url: link, tweetId: extractTweetId(link) }))
+        .filter(item => item.tweetId);
+    }
+
+    function ensurePost(tweetId, url, sport, originalPost = null) {
+      if (!state.posts[tweetId]) {
+        state.posts[tweetId] = {
+          id: tweetId,
+          url: normalizePostUrl(url, tweetId),
+          sport,
+          original: originalPost,
+          createdAt: new Date().toISOString(),
+          updatedAt: null,
+          quotes: {}
+        };
+      } else {
+        state.posts[tweetId].sport = sport || state.posts[tweetId].sport;
+        state.posts[tweetId].url = normalizePostUrl(url, tweetId);
+        if (originalPost) state.posts[tweetId].original = originalPost;
+      }
+      return state.posts[tweetId];
+    }
+
+    function quoteUrl(quote) {
+      if (quote.url) return quote.url;
+      const username = quote.author?.username;
+      return username && quote.id ? `https://x.com/${username}/status/${quote.id}` : "";
+    }
+
+    function isQuoteOfOriginal(tweet, originalTweetId) {
+      if (!originalTweetId || !Array.isArray(tweet.referenced_tweets)) return true;
+      return tweet.referenced_tweets.some(reference =>
+        reference.type === "quoted" && String(reference.id) === String(originalTweetId)
+      );
+    }
+
+    function normalizeQuotes(payload, originalTweetId = "") {
+      if (Array.isArray(payload)) return payload.map(normalizeQuote).filter(Boolean);
+      if (Array.isArray(payload.quotes)) return payload.quotes.map(normalizeQuote).filter(Boolean);
+
+      const users = new Map((payload.includes?.users || []).map(user => [String(user.id), user]));
+      return (payload.data || []).filter(tweet => isQuoteOfOriginal(tweet, originalTweetId)).map(tweet => {
+        const user = users.get(String(tweet.author_id)) || {};
+        return normalizeQuote({
+          id: tweet.id,
+          text: tweet.text,
+          created_at: tweet.created_at,
+          url: user.username ? `https://x.com/${user.username}/status/${tweet.id}` : "",
+          author: {
+            id: user.id || tweet.author_id,
+            username: user.username || "",
+            name: user.name || "",
+            profile_image_url: user.profile_image_url || ""
+          },
+          metrics: tweet.public_metrics || {}
+        });
+      }).filter(Boolean);
+    }
+
+    function normalizeQuote(raw) {
+      if (!raw || !raw.id) return null;
+      const metrics = raw.metrics || raw.public_metrics || {};
+      const author = raw.author || raw.user || {};
+
+      return {
+        id: String(raw.id),
+        url: quoteUrl(raw),
+        text: raw.text || "",
+        createdAt: raw.created_at || raw.createdAt || "",
+        fetchedAt: new Date().toISOString(),
+        author: {
+          id: String(author.id || raw.author_id || ""),
+          username: author.username || author.screen_name || "",
+          name: author.name || author.display_name || "",
+          profileImageUrl: author.profile_image_url || author.profileImageUrl || ""
+        },
+        metrics: {
+          views: firstNumber(metrics.views, metrics.view_count, metrics.impression_count, raw.views),
+          likes: firstNumber(metrics.likes, metrics.like_count, raw.likes),
+          retweets: firstNumber(metrics.retweets, metrics.retweets_count, metrics.retweet_count, raw.retweets, raw.rts)
+        }
+      };
+    }
+
+    function normalizeOriginalPost(raw, fallbackUrl, tweetId) {
+      if (!raw) return null;
+      const metrics = raw.metrics || raw.public_metrics || {};
+      const author = raw.author || raw.user || {};
+
+      return {
+        id: String(raw.id || tweetId),
+        url: raw.url || normalizePostUrl(fallbackUrl, tweetId),
+        text: raw.text || "",
+        createdAt: raw.created_at || raw.createdAt || "",
+        author: {
+          id: String(author.id || raw.author_id || ""),
+          username: author.username || author.screen_name || "",
+          name: author.name || author.display_name || "",
+          profileImageUrl: author.profile_image_url || author.profileImageUrl || ""
+        },
+        metrics: {
+          views: firstNumber(metrics.views, metrics.view_count, metrics.impression_count, raw.views),
+          likes: firstNumber(metrics.likes, metrics.like_count, raw.likes),
+          retweets: firstNumber(metrics.retweets, metrics.retweets_count, metrics.retweet_count, raw.retweets, raw.rts)
+        }
+      };
+    }
+
+    function firstNumber(...values) {
+      const found = values.find(value => value !== undefined && value !== null && value !== "");
+      return found === undefined ? null : Number(found);
+    }
+
+    function replaceQuotes(tweetId, quotes) {
+      const post = state.posts[tweetId];
+      const previousCount = Object.keys(post.quotes || {}).length;
+      post.quotes = {};
+
+      quotes.forEach(quote => {
+        post.quotes[quote.id] = quote;
+      });
+
+      post.updatedAt = new Date().toISOString();
+      persist();
+
+      return {
+        added: Object.keys(post.quotes).length,
+        removed: Math.max(previousCount - Object.keys(post.quotes).length, 0)
+      };
+    }
+
+    async function fetchQuotePayload(tweetId) {
+      const url = new URL("http://localhost:3000/quotes");
+      url.searchParams.set("tweetId", tweetId);
+      url.searchParams.set("maxPages", els.maxPages.value || "5");
+
+      const response = await authFetch(url.toString());
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || `Local API returned ${response.status}`);
+      }
+
+      return response.json();
+    }
+
+    async function handleFetch() {
+      const links = postLinksFromInput();
+      if (!links.length) {
+        setStatus("Paste at least one valid x.com or twitter.com post link.", true);
+        return;
+      }
+
+      const alreadyTracked = links.filter(item => state.posts[item.tweetId]);
+      if (alreadyTracked.length) {
+        const shouldRefetch = confirm("A post has already been fetched do you want to re-fetch the performance of that post?");
+        if (!shouldRefetch) {
+          setStatus("Fetch cancelled.");
+          return;
+        }
+      }
+
+      els.fetchBtn.disabled = true;
+      const sport = els.sport.value;
+      let totalAdded = 0;
+      let totalRemoved = 0;
+
+      try {
+        for (const item of links) {
+          setStatus(`Fetching quotes for ${item.tweetId}...`);
+          const payload = await fetchQuotePayload(item.tweetId);
+          const originalPost = normalizeOriginalPost(payload.originalPost, item.url, item.tweetId);
+          ensurePost(item.tweetId, item.url, sport, originalPost);
+          const quotes = normalizeQuotes(payload, item.tweetId);
+          const result = replaceQuotes(item.tweetId, quotes);
+          totalAdded += result.added;
+          totalRemoved += result.removed || 0;
+        }
+        setStatus(`Done. Saved ${totalAdded} quote rows and removed ${totalRemoved} stale rows.`);
+      } catch (error) {
+        setStatus(error.message || "Fetch failed.", true);
+      } finally {
+        els.fetchBtn.disabled = false;
+      }
+    }
+
+    function allRows() {
+      return Object.values(state.posts).flatMap(post =>
+        Object.values(post.quotes || {}).map(quote => ({ post, quote }))
+      );
+    }
+
+    function originalPostDate(post) {
+      const rawDate = post.original?.createdAt || post.original?.created_at || post.createdAt;
+      if (!rawDate) return "";
+      return new Date(rawDate).toISOString().slice(0, 10);
+    }
+
+    function filterSummaryRows(rows) {
+      return rows.filter(({ post }) => {
+        if (els.summarySportFilter.value !== "All" && post.sport !== els.summarySportFilter.value) return false;
+        if (els.summaryPostDateFilter.value && originalPostDate(post) !== els.summaryPostDateFilter.value) return false;
+        return true;
+      });
+    }
+
+    function accountLabel(author) {
+      if (author.username) return `@${author.username}`;
+      if (author.name) return author.name;
+      return author.id || "Unknown account";
+    }
+
+    function accountSummaries(rows) {
+      const accounts = new Map();
+
+      rows.forEach(row => {
+        const { quote } = row;
+        const author = quote.author || {};
+        const key = author.id || author.username || "unknown";
+        const current = accounts.get(key) || {
+          key,
+          author,
+          totalQuotes: 0,
+          totalViews: 0,
+          totalLikes: 0,
+          totalRetweets: 0,
+          rows: []
+        };
+
+        current.totalQuotes += 1;
+        current.totalViews += Number(quote.metrics.views || 0);
+        current.totalLikes += Number(quote.metrics.likes || 0);
+        current.totalRetweets += Number(quote.metrics.retweets || 0);
+        current.rows.push(row);
+        accounts.set(key, current);
+      });
+
+      return [...accounts.values()]
+        .map(account => ({
+          ...account,
+          impressionsPerQuote: account.totalQuotes ? account.totalViews / account.totalQuotes : 0
+        }))
+        .filter(account => account.totalQuotes >= Number(els.summaryMinQuotesFilter.value || 0))
+        .sort((a, b) => b.impressionsPerQuote - a.impressionsPerQuote || b.totalQuotes - a.totalQuotes);
+    }
+
+    function quoteOptionLabel(row, index) {
+      const quote = row.quote;
+      const views = formatNumber(quote.metrics.views || 0);
+      const likes = formatNumber(quote.metrics.likes || 0);
+      const text = (quote.text || "No quote text").replace(/\s+/g, " ").slice(0, 72);
+      return `${index + 1}. ${views} views · ${likes} likes · ${text}`;
+    }
+
+    function renderQuoteDetail(index = 0) {
+      const row = activeQuoteRows[index];
+      if (!row) {
+        els.quotePostDetail.innerHTML = "No quote selected.";
+        return;
+      }
+
+      const { post, quote } = row;
+      els.quotePostDetail.innerHTML = `
+        <strong>${formatNumber(quote.metrics.views)} impressions</strong>
+        <span> · ${formatNumber(quote.metrics.likes)} likes · ${formatNumber(quote.metrics.retweets)} RTs</span>
+        <p>${escapeHtml(quote.text || "No quote text available.")}</p>
+        <a href="${escapeHtml(quote.url || "#")}" target="_blank" rel="noreferrer">Open quote post</a>
+        <span> · </span>
+        <a href="${escapeHtml(post.url)}" target="_blank" rel="noreferrer">Open original post</a>
+      `;
+    }
+
+    function openQuoteModal(accountKey) {
+      activeQuoteRows = [...(accountRowsByKey.get(accountKey) || [])]
+        .sort((a, b) => Number(b.quote.metrics.views || 0) - Number(a.quote.metrics.views || 0));
+
+      const firstAuthor = activeQuoteRows[0]?.quote.author || {};
+      els.quoteModalTitle.textContent = `Quote Posts - ${accountLabel(firstAuthor)}`;
+      els.quoteModalSub.textContent = `${formatNumber(activeQuoteRows.length)} quote posts`;
+      els.quotePostSelect.innerHTML = activeQuoteRows
+        .map((row, index) => `<option value="${index}">${escapeHtml(quoteOptionLabel(row, index))}</option>`)
+        .join("");
+
+      renderQuoteDetail(0);
+      els.quoteModal.classList.remove("hidden");
+    }
+
+    function render() {
+      const rows = allRows();
+      const uniqueQuoteIds = new Set(rows.map(row => row.quote.id));
+      const totals = rows.reduce((acc, row) => {
+        acc.likes += Number(row.quote.metrics.likes || 0);
+        acc.views += Number(row.quote.metrics.views || 0);
+        return acc;
+      }, { likes: 0, views: 0 });
+
+      els.totalPosts.textContent = formatNumber(Object.keys(state.posts).length);
+      els.totalQuotes.textContent = formatNumber(uniqueQuoteIds.size);
+      els.totalLikes.textContent = formatNumber(totals.likes);
+      els.totalViews.textContent = formatNumber(totals.views);
+
+      const summaryRows = filterSummaryRows(rows);
+      const summaries = accountSummaries(summaryRows);
+      accountRowsByKey = new Map(summaries.map(account => [account.key, account.rows]));
+      els.summaryEmpty.classList.toggle("hidden", summaries.length > 0);
+      els.summaryWrap.classList.toggle("hidden", summaries.length === 0);
+      els.accountSummaryRows.innerHTML = summaries.slice(0, 25).map((account, index) => {
+        return `
+        <tr>
+          <td>
+            <div class="account">
+              <span class="summary-rank">${index + 1}</span>
+              <img class="avatar" src="${escapeHtml(account.author.profileImageUrl)}" alt="" onerror="this.src='';" />
+              <div>
+                <strong>${escapeHtml(account.author.name || accountLabel(account.author))}</strong>
+                <span>${escapeHtml(accountLabel(account.author))}</span>
+              </div>
+            </div>
+          </td>
+          <td>${formatNumber(account.totalQuotes)}</td>
+          <td>${formatNumber(Math.round(account.impressionsPerQuote))}</td>
+          <td>${formatNumber(account.totalViews)}</td>
+          <td>${formatNumber(account.totalLikes)}</td>
+          <td>${formatNumber(account.totalRetweets)}</td>
+          <td><button class="secondary show-quotes-btn" type="button" data-account-key="${escapeHtml(account.key)}">Show Quote Posts</button></td>
+        </tr>
+      `;
+      }).join("");
+
+      const posts = Object.values(state.posts)
+        .sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt)));
+      if (!posts.length) {
+        els.postsList.className = "empty";
+        els.postsList.textContent = "No original posts tracked yet.";
+      } else {
+        els.postsList.className = "table-wrap";
+        els.postsList.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Sport</th><th>Original tweet</th><th>Post text</th><th>Total quotes</th><th>Total impressions</th><th>Total likes</th><th>Last fetched</th><th></th></tr>
+            </thead>
+            <tbody>
+              ${posts.map(post => {
+                const original = post.original || {};
+                const sourceRows = Object.values(post.quotes || {}).map(quote => ({ post, quote }));
+                const postTotals = sourceRows.reduce((acc, row) => {
+                  acc.views += Number(row.quote.metrics.views || 0);
+                  acc.likes += Number(row.quote.metrics.likes || 0);
+                  return acc;
+                }, { views: 0, likes: 0 });
+
+                return `
+                  <tr>
+                    <td><span class="pill">${escapeHtml(post.sport)}</span></td>
+                    <td><a href="${escapeHtml(original.url || post.url)}" target="_blank" rel="noreferrer">Open original</a><br><span class="sub">${escapeHtml(post.id)}</span></td>
+                    <td><div class="post-text">${escapeHtml(original.text || "Refetch this post to load original tweet text.")}</div></td>
+                    <td>${formatNumber(sourceRows.length)}</td>
+                    <td>${formatNumber(postTotals.views)}</td>
+                    <td>${formatNumber(postTotals.likes)}</td>
+                    <td>${post.updatedAt ? new Date(post.updatedAt).toLocaleString() : "-"}</td>
+                    <td><button class="secondary delete-post-btn" type="button" data-post-id="${escapeHtml(post.id)}">Delete</button></td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    els.fetchBtn.addEventListener("click", handleFetch);
+    els.authLoginBtn.addEventListener("click", login);
+    els.authPassword.addEventListener("keydown", event => {
+      if (event.key === "Enter") login();
+    });
+    els.trackedPostsBtn.addEventListener("click", () => {
+      els.postsModal.classList.remove("hidden");
+    });
+    els.themeToggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("kalshi-x-theme", document.body.classList.contains("dark") ? "dark" : "light");
+      updateThemeButton();
+    });
+    els.closePostsBtn.addEventListener("click", () => {
+      els.postsModal.classList.add("hidden");
+    });
+    els.postsModal.addEventListener("click", event => {
+      if (event.target === els.postsModal) els.postsModal.classList.add("hidden");
+    });
+    els.accountSummaryRows.addEventListener("click", event => {
+      const button = event.target.closest(".show-quotes-btn");
+      if (!button) return;
+
+      openQuoteModal(button.dataset.accountKey);
+    });
+    els.quotePostSelect.addEventListener("change", () => {
+      renderQuoteDetail(Number(els.quotePostSelect.value || 0));
+    });
+    els.closeQuoteModalBtn.addEventListener("click", () => {
+      els.quoteModal.classList.add("hidden");
+    });
+    els.quoteModal.addEventListener("click", event => {
+      if (event.target === els.quoteModal) els.quoteModal.classList.add("hidden");
+    });
+    els.summarySportFilter.addEventListener("change", render);
+    els.summaryPostDateFilter.addEventListener("change", render);
+    els.summaryMinQuotesFilter.addEventListener("input", render);
+    els.postsList.addEventListener("click", event => {
+      const button = event.target.closest(".delete-post-btn");
+      if (!button) return;
+
+      const postId = button.dataset.postId;
+      if (!postId || !confirm("Delete this tracked original post and its quotes?")) return;
+
+      delete state.posts[postId];
+      persist();
+      setStatus("Tracked post deleted.");
+    });
+    els.clearBtn.addEventListener("click", () => {
+      if (!confirm("Clear all local tracker history? Export first if you need a backup.")) return;
+      state = { version: 1, updatedAt: null, posts: {}, settings: state.settings };
+      persist();
+      setStatus("Local history cleared.");
+    });
+
+    render();
+    checkAuth();
+  </script>
+</body>
+</html>

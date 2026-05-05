@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: kalshi-x-performance-tracker
+    env: node
+    rootDir: api
+    buildCommand: ""
+    startCommand: npm start
+    envVars:
+      - key: AUTH_APP_ID
+        value: kalshi-x-tracker
+      - key: SESSION_TTL_MS
+        value: "86400000"
+      - key: X_BEARER_TOKEN
+        sync: false
+      - key: AUTH_DAILY_PASSWORD
+        sync: false
+      - key: AUTH_ADMIN_KEY
+        sync: false

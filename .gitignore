@@ -1,0 +1,3 @@
+api/.env
+api/auth-state.json
+node_modules/
