@@ -1,3 +1,4 @@
 api/.env
 api/auth-state.json
+api/tracker-state.json
 node_modules/

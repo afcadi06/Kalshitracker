@@ -806,6 +806,52 @@
       render();
     }
 
+    function mergeState(baseState, incomingState) {
+      const merged = {
+        ...baseState,
+        ...incomingState,
+        settings: { ...(baseState.settings || {}), ...(incomingState.settings || {}) },
+        posts: { ...(baseState.posts || {}) }
+      };
+
+      Object.entries(incomingState.posts || {}).forEach(([postId, incomingPost]) => {
+        const existingPost = merged.posts[postId] || {};
+        merged.posts[postId] = {
+          ...existingPost,
+          ...incomingPost,
+          quotes: {
+            ...(existingPost.quotes || {}),
+            ...(incomingPost.quotes || {})
+          }
+        };
+      });
+
+      return merged;
+    }
+
+    async function saveSharedState(replace = false) {
+      await authFetch("/state", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ state, replace })
+      });
+    }
+
+    async function syncSharedState() {
+      try {
+        const response = await authFetch("/state");
+        if (!response.ok) throw new Error("Unable to load shared saved posts.");
+        const payload = await response.json();
+        const serverState = payload.state || {};
+        const merged = mergeState(state, serverState);
+        state = mergeState(merged, state);
+        persist();
+        await saveSharedState(true);
+      } catch (error) {
+        setStatus(error.message || "Saved posts sync failed.", true);
+      }
+    }
+
     function setStatus(message, isError = false) {
       els.status.textContent = message;
       els.status.classList.toggle("error", isError);
@@ -863,6 +909,7 @@
         const payload = await response.json();
         if (!payload.ok) throw new Error(payload.message || "Session expired.");
         hideAuthGate();
+        await syncSharedState();
         return true;
       } catch {
         localStorage.removeItem(AUTH_STORAGE_KEY);
@@ -891,6 +938,7 @@
         els.authPassword.value = "";
         setAuthStatus("");
         hideAuthGate();
+        await syncSharedState();
       } catch (error) {
         setAuthStatus(error.message || "Login failed.", true);
       } finally {
@@ -1108,6 +1156,7 @@
           totalAdded += result.added;
           totalRemoved += result.removed || 0;
         }
+        await saveSharedState();
         setStatus(`Done. Saved ${totalAdded} quote rows and removed ${totalRemoved} stale rows.`);
       } catch (error) {
         setStatus(error.message || "Fetch failed.", true);
@@ -1346,12 +1395,14 @@
 
       delete state.posts[postId];
       persist();
+      saveSharedState(true).catch(error => setStatus(error.message || "Shared save failed.", true));
       setStatus("Tracked post deleted.");
     });
     els.clearBtn.addEventListener("click", () => {
       if (!confirm("Clear all local tracker history? Export first if you need a backup.")) return;
       state = { version: 1, updatedAt: null, posts: {}, settings: state.settings };
       persist();
+      saveSharedState(true).catch(error => setStatus(error.message || "Shared save failed.", true));
       setStatus("Local history cleared.");
     });
 

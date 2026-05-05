@@ -14,6 +14,7 @@ const DEFAULT_MAX_PAGES = 5;
 const APP_ROOT = join(__dirname, "..");
 const INDEX_PATH = join(APP_ROOT, "index.html");
 const AUTH_STATE_PATH = join(__dirname, "auth-state.json");
+const TRACKER_STATE_PATH = join(__dirname, "tracker-state.json");
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || DAY_MS);
 const AUTH_APP_ID = process.env.AUTH_APP_ID || "kalshi-x-tracker";
@@ -119,6 +120,55 @@ function saveAuthState(state) {
   next.updatedAt = new Date().toISOString();
   writeFileSync(AUTH_STATE_PATH, JSON.stringify(next, null, 2), "utf8");
   return next;
+}
+
+function sanitizeTrackerState(raw) {
+  const state = raw && typeof raw === "object" ? raw : {};
+  return {
+    version: 1,
+    updatedAt: state.updatedAt || new Date().toISOString(),
+    posts: state.posts && typeof state.posts === "object" ? state.posts : {},
+    settings: state.settings && typeof state.settings === "object" ? state.settings : {}
+  };
+}
+
+function loadTrackerState() {
+  try {
+    return sanitizeTrackerState(JSON.parse(readFileSync(TRACKER_STATE_PATH, "utf8")));
+  } catch {
+    return sanitizeTrackerState({});
+  }
+}
+
+function saveTrackerState(state) {
+  const next = sanitizeTrackerState(state);
+  next.updatedAt = new Date().toISOString();
+  writeFileSync(TRACKER_STATE_PATH, JSON.stringify(next, null, 2), "utf8");
+  return next;
+}
+
+function mergeTrackerStates(baseState, incomingState) {
+  const base = sanitizeTrackerState(baseState);
+  const incoming = sanitizeTrackerState(incomingState);
+  const merged = {
+    ...base,
+    settings: { ...base.settings, ...incoming.settings },
+    posts: { ...base.posts }
+  };
+
+  for (const [postId, incomingPost] of Object.entries(incoming.posts || {})) {
+    const existingPost = merged.posts[postId] || {};
+    merged.posts[postId] = {
+      ...existingPost,
+      ...incomingPost,
+      quotes: {
+        ...(existingPost.quotes || {}),
+        ...(incomingPost.quotes || {})
+      }
+    };
+  }
+
+  return saveTrackerState(merged);
 }
 
 function pruneSessions(sessions) {
@@ -257,6 +307,23 @@ async function handleAdminRevoke(request, response, state) {
   state.loginEvents.push({ at: new Date().toISOString(), username: state.sessions[token].username || "", deviceId: state.sessions[token].deviceId || "", ip: "", event: "revoke-session" });
   saveAuthState(state);
   return sendJson(response, 200, { ok: true, message: "Session revoked." });
+}
+
+async function handleTrackerStateSave(request, response) {
+  let body;
+  try {
+    body = await readJsonBody(request);
+  } catch {
+    return sendJson(response, 400, { ok: false, message: "Invalid JSON." });
+  }
+
+  if (body.replace) {
+    const replaced = saveTrackerState(body.state || body);
+    return sendJson(response, 200, { ok: true, state: replaced });
+  }
+
+  const merged = mergeTrackerStates(loadTrackerState(), body.state || body);
+  return sendJson(response, 200, { ok: true, state: merged });
 }
 
 function isQuoteOfOriginal(tweet, originalTweetId) {
@@ -410,6 +477,13 @@ const server = createServer(async (request, response) => {
   }
   if (request.method === "POST" && url.pathname === "/admin/update") return handleAdminUpdate(request, response, authState);
   if (request.method === "POST" && url.pathname === "/admin/revoke-session") return handleAdminRevoke(request, response, authState);
+
+  if (url.pathname === "/state") {
+    if (!validSession(request, authState)) return sendJson(response, 401, { error: "Login required." });
+    if (request.method === "GET") return sendJson(response, 200, { ok: true, state: loadTrackerState() });
+    if (request.method === "POST") return handleTrackerStateSave(request, response);
+    return sendJson(response, 405, { error: "Method not allowed." });
+  }
 
   if (url.pathname !== "/quotes") {
     return sendJson(response, 404, { error: "Use /quotes?tweetId=1234567890" });
