@@ -1114,7 +1114,7 @@
     }
 
     async function fetchQuotePayload(tweetId) {
-      const url = new URL("http://localhost:3000/quotes");
+      const url = new URL("/quotes", window.location.origin);
       url.searchParams.set("tweetId", tweetId);
       url.searchParams.set("maxPages", els.maxPages.value || "5");
 
