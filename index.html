@@ -881,7 +881,10 @@
     async function authFetch(url, options = {}) {
       const headers = { ...(options.headers || {}) };
       const token = authToken();
-      if (token) headers["x-session-token"] = token;
+      if (token) {
+        headers["x-session-token"] = token;
+        headers.Authorization = `Bearer ${token}`;
+      }
       return fetch(url, { ...options, headers });
     }
 
@@ -1118,6 +1121,10 @@
       const response = await authFetch(url.toString());
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+          showAuthGate();
+        }
         throw new Error(payload.error || `Local API returned ${response.status}`);
       }
 

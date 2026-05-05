@@ -185,7 +185,9 @@ function clientIp(request) {
 }
 
 function validSession(request, state) {
-  const token = String(request.headers["x-session-token"] || "").trim();
+  const authHeader = String(request.headers.authorization || "");
+  const bearerToken = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
+  const token = String(request.headers["x-session-token"] || bearerToken || "").trim();
   if (!state.enabled) return false;
   if (!token) return false;
   state.sessions = pruneSessions(state.sessions);
